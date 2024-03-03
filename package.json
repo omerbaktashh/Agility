@@ -1,0 +1,43 @@
+{
+  "name": "Agility_irjgv",
+  "version": "0.1.0",
+  "main": "./build/electron/main.js",
+  "scripts": {
+    "dump": "dump-stlite-desktop-artifacts",
+    "serve": "cross-env NODE_ENV=production electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "dist:win": "electron-builder --win --x64",
+    "dist:mac": "electron-builder --mac",
+    "dist:linux": "electron-builder --linux",
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "build": {
+    "appId": "com.yourcompany.agility",
+    "productName": "AgilityApp",
+    "files": ["build/**/*"],
+    "directories": {
+      "buildResources": "assets"
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "icons/icon.ico"
+    },
+    "mac": {
+      "category": "public.app-category.utilities",
+      "icon": "icons/icon.icns"
+    },
+    "linux": {
+      "target": ["AppImage", "deb"],
+      "icon": "icons"
+    }
+  },
+  "devDependencies": {
+    "@stlite/desktop": "0.39.0",
+    "cross-env": "^7.0.3",
+    "electron": "^26.2.4",
+    "electron-builder": "^24.6.4"
+  }
+}
