@@ -1,0 +1,2 @@
+node_modules/electron/dist/** filter=lfs diff=lfs merge=lfs -text
+Agility filter=lfs diff=lfs merge=lfs -text
