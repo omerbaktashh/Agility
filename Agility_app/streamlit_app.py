@@ -7,14 +7,15 @@ import page_2
 
 
 def main_page():
-    st.title("Daten der Agility-Veranstaltung eingeben")
+    st.title("Basisinformationen der Agility-Veranstaltung eingeben")
 
-    organizer = st.text_input("Veranstalter")
-    ag_richter = st.text_input("AG Richter")
-    jump_richter = st.text_input("Jump Richter")
-    art_der_veranstaltung = st.text_input("Art der Veranstaltung")
-    ort_der_veranstaltung = st.text_input("Ort der Veranstaltung")
-    date = st.date_input("Datum")
+   # Basisinformationen erfassen und im Session State speichern
+    st.session_state["organizer"] = st.text_input("Veranstalter", st.session_state.get("organizer", ""))
+    st.session_state["ag_richter"] = st.text_input("AG Richter", st.session_state.get("ag_richter", ""))
+    st.session_state["jump_richter"] = st.text_input("Jump Richter", st.session_state.get("jump_richter", ""))
+    st.session_state["art_der_veranstaltung"] = st.text_input("Art der Veranstaltung", st.session_state.get("art_der_veranstaltung", ""))
+    st.session_state["ort_der_veranstaltung"] = st.text_input("Ort der Veranstaltung", st.session_state.get("ort_der_veranstaltung", ""))
+    st.session_state["date"] = st.date_input("Datum", st.session_state.get("date", None))
 
     button_pruefung = st.button("Weiter")
     if button_pruefung:
@@ -23,6 +24,17 @@ def main_page():
 
 
     with st.sidebar:
+        # Navigationstasten in der Sidebar
+        if st.button("📝 Startnummern vergeben"):
+            st.session_state.current_page = "page_1"
+            st.experimental_rerun()
+        
+        if st.button("🏃‍♂️ Agility Lauf"):
+            st.session_state.current_page = "page_2"
+            st.experimental_rerun()
+
+
+
         st.title("Anmelde-Bogen")
         form = st.form(key="Teilname", clear_on_submit=True)
         with form:

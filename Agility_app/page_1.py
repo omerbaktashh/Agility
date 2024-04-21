@@ -10,36 +10,8 @@ def shuffle_dataframe(df):
     return shuffled_df.reset_index(drop=True)
 
 
-def Parcour_data_form():
-    standardzeit_sec = 0
-
-    with st.form("Parcour-Daten"):
-        st.subheader("Parcour-Daten eingeben, um Standardzeit zu berechnen")
-        laenge_meter = st.number_input("Länge in Meter")
-        bewegung_sec = st.number_input("Bewegung in Sekunden")
-
-        if (laenge_meter != 0) & (bewegung_sec != 0):
-            standardzeit_sec = round(laenge_meter / bewegung_sec)
-            st.session_state['standardzeit_sec'] = standardzeit_sec
-            st.write("Die Standardzeit beträgt:", standardzeit_sec, "Sekunden")
-        else:
-            st.error("Die Länge in Meter und die Bewegung in Sekunden dürfen nicht null sein.")
-
-        anzahl_hindernisse = st.number_input("Anzahl Hindernisse", min_value=0, step=1)
-        submit_button = st.form_submit_button("Standardzeit ausgeben")
-    return submit_button, standardzeit_sec
-
-
-# Styling-Funktion definieren
-def highlight_first_row(s):
-    if s.name == 0:
-        return ['background-color: yellow'] * len(s)
-    else:
-        return [''] * len(s)
-
-
 def upload_file():
-    st.title("Teilnehmerliste hochladen - Startnummern werden automatisch vergeben")
+    st.title("Laden Sie die Teilnehmerliste hoch - Die Startnummern werden automatisiert erstellt und weiter unten angezeigt.")
     uploaded_file = st.file_uploader("Datei hochladen", type=["csv", "xlsx"])
     if uploaded_file:
         st.success("Datei erfolgreich hochgeladen!")
@@ -62,9 +34,14 @@ def init_session_state():
         if 'current_row' not in st.session_state:
             st.session_state['current_row'] = 0
 
-        st.subheader("Mit welchem Lauf soll gestartet werden?")
+        st.subheader("Wählen Sie aus, mit welchem Lauf gestartet werden soll.")
         selected_runs = st.multiselect("Lauf auswählen", ["Mini-Lauf", "Maxi-Lauf", "A1", "A2", "Cup"])
 
+        # Generierung des Standard-Dateinamens basierend auf der Auswahl der Läufe
+        if selected_runs:
+            dateiname = "_".join(selected_runs)
+            st.session_state['file_name'] = f"Starterliste_{dateiname}"
+        
         if 'df' in st.session_state:
             filtered_df = st.session_state['df'].copy()
 
@@ -84,16 +61,18 @@ def init_session_state():
                 filtered_df = filtered_df[filtered_df["Cup"] == "Cup"]
 
             # Entfernen Sie doppelte Einträge, falls es welche gibt
-            filtered_df = filtered_df.drop_duplicates()
+            st.session_state.filtered_df = filtered_df.drop_duplicates()
 
-            st.subheader("hochgeladene Teilnehmerliste:")
-            # filtered_df = filtered_df[filtered_df["Prüfung"].notnull()] # falls Prüfung leer ist, werden diese nicht angezeigt
+            st.subheader("hochgeladene & gefilterte Teilnehmerliste")
             st.dataframe(filtered_df)
+            
+            # Standard-Dateiname zuweisen
+            if 'file_name' in st.session_state:
+                st.session_state['download_name'] = f"{st.session_state['file_name']}.csv"
 
-            submit_button_parcour, st.session_state.standardzeit_sec = Parcour_data_form()
 
             # shuffle_dataframe
-            shuffled_df = shuffle_dataframe(st.session_state['df'])
+            shuffled_df = shuffle_dataframe(st.session_state['filtered_df'])
             for col in ['Minuten', 'Sekunden', 'Millisekunden', 'Fehler', 'Verweigerung']:
                 shuffled_df[col] = 0
 
@@ -102,10 +81,13 @@ def init_session_state():
                 shuffled_df[col] = shuffled_df[col].astype(int)
             
             # Store shuffled_df in session state
+            shuffled_df["Startnummer"] = np.arange(1, len(shuffled_df) + 1)
+            columns_order = [shuffled_df.columns[-1]] + list(shuffled_df.columns[:-1])
+            shuffled_df = shuffled_df[columns_order]
             st.session_state['shuffled_df'] = shuffled_df
         
         if 'shuffled_df' in st.session_state:
-            st.info("Starterliste:", icon="ℹ️")
+            st.info("automatisierte Starterliste", icon="ℹ️")
             st.write(st.session_state['shuffled_df'])
 
 
@@ -120,21 +102,27 @@ def agility_run():
 
 
 def starter_list_to_csv():
-    if "shuffled_df" in st.session_state:
-        file_name = st.text_input("Geben Sie einen Namen für die CSV-Datei ein")
-        if file_name:
+    if "shuffled_df" in st.session_state and "download_name" in st.session_state:
             csv = st.session_state.shuffled_df.to_csv(index=False, sep=";")
             st.download_button(
                 label="Starterliste herunterladen",
                 data=csv,
-                file_name=f"{file_name}.csv",
+                file_name=st.session_state['download_name'],
                 mime="text/csv",
             )
-
+    with st.sidebar:
+        # Navigationstasten in der Sidebar
+        if st.button("🏠 Startseite"):
+            st.session_state.current_page = "main"
+            st.experimental_rerun()
+        
+        if st.button("🏃‍♂️ Agility Lauf"):
+            st.session_state.current_page = "page_2"
+            st.experimental_rerun()
 def main():
     init_session_state()
     starter_list_to_csv()
-    agility_run()
+    #agility_run()
 
 
 if __name__ == "__main__":
